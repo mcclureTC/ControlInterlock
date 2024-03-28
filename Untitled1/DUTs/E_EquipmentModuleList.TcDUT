@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="E_EquipmentModuleList" Id="{46261fc2-0836-4f8e-b677-3cab072404b1}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'strict'}
+{attribute 'to_string'}
+TYPE E_EquipmentModuleList :
+(
+	Open := 0,//Interlock is open and available
+	EM1,
+	EM2,
+	EM3,
+	Last
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

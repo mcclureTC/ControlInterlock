@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="MAIN" Id="{c371776a-441b-42e0-8bb5-744f0ec82fd5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	Machine : MachineModule := (Name := 'Machine');	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Machine.CyclicLogic();
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="2" Count="0" />
+      <LineId Id="44" Count="2" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

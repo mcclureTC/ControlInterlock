@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="ITF_Observer" Id="{7fcd97c8-dddd-4c65-bfbc-c7a076a7a337}">
+    <Declaration><![CDATA[INTERFACE ITF_Observer
+]]></Declaration>
+    <Method Name="updateConnection" Id="{c25919cf-b645-41c3-bb8f-6f088880249a}">
+      <Declaration><![CDATA[METHOD updateConnection
+VAR_INPUT
+	Module : REFERENCE TO MachineModule;
+END_VAR]]></Declaration>
+    </Method>
+    <Method Name="updateLock" Id="{38e78471-25ef-429e-b095-e2cc48b34446}">
+      <Declaration><![CDATA[METHOD updateLock
+VAR_INPUT
+	setLock : BOOL;
+END_VAR]]></Declaration>
+    </Method>
+  </Itf>
+</TcPlcObject>

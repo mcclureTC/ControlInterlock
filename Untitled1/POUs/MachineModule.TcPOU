@@ -1,0 +1,321 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="MachineModule" Id="{f08e74c6-9024-446e-afd6-0d306e48ad6d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK MachineModule EXTENDS FB_PackML_BaseModule IMPLEMENTS ITF_Observable
+VAR
+	//SubModules
+	Equip1 : EquipmentModule := (Name := 'EM1');
+	Equip2 : EquipmentModule := (Name := 'EM2');
+	Equip3 : EquipmentModule := (Name := 'EM3');
+
+	//ITF_Observable
+	_Observers : ARRAY[1..Parameters_PackML_Base.MAX_NO_OF_SUBMODULES + 1] OF ITF_Observer;
+
+	//Data to be Observered
+	_InterlockList	  : E_EquipmentModuleList;
+	interlockListPrev : E_EquipmentModuleList;
+
+	//CyclicLogic
+	fbRT	  : R_TRIG;
+	register1 : BOOL;
+	remove1	  : BOOL;
+	register2 : BOOL;
+	remove2	  : BOOL;
+	register3 : BOOL;
+	remove3	  : BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="CyclicLogic" Id="{850abb3a-55c9-4f80-bb2e-de8548b8f374}">
+      <Declaration><![CDATA[METHOD PUBLIC CyclicLogic]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT _InitComplete THEN
+	_InitComplete := Initialize();
+	RETURN;
+END_IF
+
+//On data change call all observers
+fbRT(CLK := _InterlockList <> interlockListPrev);
+IF fbRT.Q THEN
+	IF _InterlockList = E_EquipmentModuleList.Open THEN
+		notifyObserverLock(setLock := FALSE);
+	ELSE
+		notifyObserverLock(setLock := TRUE);
+	END_IF
+
+	interlockListPrev := _InterlockList;
+END_IF
+
+//Attach Observer
+IF register1 THEN
+	IF registerObserver(Equip1) THEN
+		register1 := FALSE;
+	END_IF
+END_IF
+
+IF register2 THEN
+	IF registerObserver(Equip2) THEN
+		register2 := FALSE;
+	END_IF
+END_IF
+
+IF register3 THEN
+	IF registerObserver(Equip3) THEN
+		register3 := FALSE;
+	END_IF
+END_IF
+
+//Detach Observer
+IF remove1 THEN
+	IF removeObserver(Equip1) THEN
+		Unlock(Equip1);
+		remove1 := FALSE;
+	END_IF
+END_IF
+
+IF remove2 THEN
+	IF removeObserver(Equip2) THEN
+		Unlock(Equip2);
+		remove2 := FALSE;
+	END_IF
+END_IF
+
+IF remove3 THEN
+	IF removeObserver(Equip3) THEN
+		Unlock(Equip3);
+		remove3 := FALSE;
+	END_IF
+END_IF
+
+SUPER^.CyclicLogic();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialize" Id="{b4b19a2f-3e0f-4d18-bbdb-35b753896d40}">
+      <Declaration><![CDATA[METHOD PROTECTED Initialize : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Initialize := FALSE;
+CASE DescendantSequenceState OF
+	0:
+		//
+		RegisterSubmodule(Equip1);
+		RegisterSubmodule(Equip2);
+		RegisterSubmodule(Equip3);
+
+		//
+		registerObserver(Equip1);
+		registerObserver(Equip2);
+		registerObserver(Equip3);
+
+		//
+		_LogModeChanges			:= FALSE;
+		_LogStateChanges		:= FALSE;
+		DescendantSequenceState := DescendantSequenceState + 10;
+
+	10:
+		(* Call the Super *)
+		IF SUPER^.Initialize() THEN
+			DescendantSequenceState := DescendantSequenceState + 10;
+		END_IF
+
+	20:
+		Initialize := TRUE;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="InterlockList" Id="{c7539675-9733-40e3-974e-78d22d551635}">
+      <Declaration><![CDATA[PROPERTY InterlockList : E_EquipmentModuleList]]></Declaration>
+      <Get Name="Get" Id="{765eecea-4663-4e5b-a62b-9e66be96d7c8}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[InterlockList := _InterlockList;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Lock" Id="{5b23d2b3-dbdb-4478-9d56-447f3e2dd70d}">
+      <Declaration><![CDATA[METHOD PUBLIC Lock : BOOL
+VAR_INPUT
+	EM : REFERENCE TO FB_PackML_BaseModule;
+END_VAR
+
+VAR
+	eList : E_EquipmentModuleList;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Select the element from the ENUM that matches a string value
+FOR eList := E_EquipmentModuleList.Open TO E_EquipmentModuleList.Last DO
+	IF EM.Name = TO_STRING(eList) THEN
+		_InterlockList := eList;//Set the enum instance to the element that holds the lock
+		EXIT;
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="notifyObserverConnection" Id="{fb220273-dff3-45b1-ac68-3ce2221247f8}">
+      <Declaration><![CDATA[METHOD notifyObserverConnection : BOOL
+VAR
+	i : udint;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Call all registered Observers and pass them the Observable
+FOR i := 1 TO Parameters_PackML_Base.MAX_NO_OF_SUBMODULES DO
+	IF _Observers[i] <> 0 THEN
+		_Observers[i].updateConnection(THIS^);
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="notifyObserverLock" Id="{a669e549-f255-43dc-bc58-2088d4e1ccb8}">
+      <Declaration><![CDATA[METHOD notifyObserverLock : BOOL
+VAR_INPUT
+	setLock : BOOL;
+END_VAR
+VAR
+	i: UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Call all registered Observers and pass them the lock value
+FOR i := 1 TO Parameters_PackML_Base.MAX_NO_OF_SUBMODULES DO
+	IF _Observers[i] <> 0 THEN
+		_Observers[i].updateLock(setLock);
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="registerObserver" Id="{ab60e2f8-9e94-4c6c-8606-1b24dbd7dcfe}">
+      <Declaration><![CDATA[METHOD registerObserver : BOOL
+VAR_INPUT
+	Observer : ITF_Observer;
+END_VAR
+
+VAR
+	i : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[registerObserver := FALSE;
+
+//Check if Observer is already registered
+FOR i := 1 TO Parameters_PackML_Base.MAX_NO_OF_SUBMODULES DO
+	IF _Observers[i] = Observer THEN
+		RETURN;
+	END_IF
+END_FOR
+
+//Add Observer to first available index within the array
+FOR i := 1 TO Parameters_PackML_Base.MAX_NO_OF_SUBMODULES DO
+	IF _Observers[i] = 0 THEN
+		_Observers[i] := Observer;
+		_Observers[i].updateConnection(THIS^); //On registration pass Observable to Observer for any Initialization it might need to do
+		registerObserver := TRUE;
+		EXIT;
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="removeObserver" Id="{09ce87ba-0d91-4ce0-883d-3eeece6053eb}">
+      <Declaration><![CDATA[METHOD removeObserver : BOOL
+VAR_INPUT
+	Observer : ITF_Observer;
+END_VAR
+
+VAR
+	i : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[removeObserver := FALSE;
+
+//Check for valid input
+IF (Observer = 0) THEN
+	RETURN;
+END_IF
+
+//Find Observer to be removed and set the array index to 0
+FOR i := 1 TO Parameters_PackML_Base.MAX_NO_OF_SUBMODULES DO
+	IF (_Observers[i] = Observer) THEN
+		Observer.updateLock(setLock := FALSE);
+		Observer.updateConnection(0);//Let the Observer know that it no longer has an Observable
+		_Observers[i]  := 0;
+		removeObserver := TRUE;
+		EXIT;
+	END_IF
+END_FOR
+
+//Clean up array
+FOR i := 1 TO Parameters_PackML_Base.MAX_NO_OF_SUBMODULES DO
+	IF _Observers[i] = 0 THEN
+		//array size is declared to +1 for these 2 lines of code to be safe
+		_Observers[i]	  := _Observers[i + 1];
+		_Observers[i + 1] := 0;
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Unlock" Id="{b98a043a-3bcf-43dd-a9c3-04b5e0a51b88}">
+      <Declaration><![CDATA[METHOD Unlock : bool
+VAR_INPUT
+	EM : REFERENCE TO FB_PackML_BaseModule;
+END_VAR
+VAR
+	eList : E_EquipmentModuleList;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//If the EM that called the method is holding the lock, then remove the lock
+FOR eList := E_EquipmentModuleList.Open TO E_EquipmentModuleList.Last DO
+	IF EM.Name = TO_STRING(_InterlockList) THEN
+		_InterlockList := E_EquipmentModuleList.Open;
+		EXIT;
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="MachineModule">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="MachineModule.CyclicLogic">
+      <LineId Id="123" Count="57" />
+      <LineId Id="69" Count="0" />
+    </LineIds>
+    <LineIds Name="MachineModule.Initialize">
+      <LineId Id="125" Count="25" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="MachineModule.InterlockList.Get">
+      <LineId Id="8" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="MachineModule.Lock">
+      <LineId Id="76" Count="5" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="MachineModule.notifyObserverConnection">
+      <LineId Id="6" Count="4" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="MachineModule.notifyObserverLock">
+      <LineId Id="16" Count="4" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="MachineModule.registerObserver">
+      <LineId Id="52" Count="16" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="MachineModule.removeObserver">
+      <LineId Id="36" Count="9" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="46" Count="1" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="48" Count="9" />
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="MachineModule.Unlock">
+      <LineId Id="20" Count="3" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="17" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

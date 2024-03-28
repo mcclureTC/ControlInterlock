@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="Interlock" Id="{2fdb8b3a-37c3-426f-9e81-673159b1ccfe}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Interlock
+VAR
+	_Locked : BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Lock" Id="{4ddb4347-23aa-417a-a71b-3dc70fac702e}">
+      <Declaration><![CDATA[METHOD Lock : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_Locked := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Locked" Id="{6425f6cf-50a4-4dfb-a771-1d6e114ee8fa}">
+      <Declaration><![CDATA[PROPERTY Locked : bool]]></Declaration>
+      <Get Name="Get" Id="{87fa3bfd-2342-4971-afd5-ff18b0c2e640}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Locked := _Locked;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Unlock" Id="{6580c073-0cb3-4d75-876d-930fa523d908}">
+      <Declaration><![CDATA[METHOD Unlock : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_Locked := false;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Unlocked" Id="{50b4c469-df3e-4820-94b4-f49b904bc837}">
+      <Declaration><![CDATA[PROPERTY Unlocked : bool]]></Declaration>
+      <Get Name="Get" Id="{8faa066b-b816-480c-851e-1d3de346bbee}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Unlocked := NOT _Locked;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="Interlock">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="Interlock.Lock">
+      <LineId Id="5" Count="1" />
+    </LineIds>
+    <LineIds Name="Interlock.Locked.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Interlock.Unlock">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Interlock.Unlocked.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
